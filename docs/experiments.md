@@ -17,6 +17,8 @@
 | 장애 노드 재가입 및 동기화 | 자동 복귀 관측과 노드별 데이터 검증 | 1회 통과: [상세](node-rejoin.md) |
 | Secondary 장애 및 복귀 | 동적 Secondary 조회, SIGKILL, 데이터·성능 관측 | 1회 통과, 1,600건, 오류·재시도 0회: [상세](secondary-failure.md) |
 | 1 대 2 네트워크 분할 및 복구 | 실제 네트워크 단절·localhost COMMIT 검사 | 전체 FAIL: 재시도 한도 초과 1건, 정합성 PASS: [상세](network-partition.md) |
+| 60초 재시도 정책의 분할 재실험 | 시간 예산 기반 클라이언트 | FAIL: 선출 지연·작업자 중단, 미해결 원인 있음: [상세](retry-budget.md) |
+| 같은 ID 미완료 요청 재처리 | 원본 보존, 별도 결과·노드별 검증 | 두 실험 각각 최종 1,600건, 중복 재처리 추가 지급 0건 |
 | 전체 Quorum 상실 / COMMIT 응답 유실 실험 | 후속 Phase 3 | 미구현 |
 
 실행 환경: Windows Docker Desktop 4.25.0 / Linux x86_64 Engine 24.0.6 / Compose 2.23.0. Server, Shell, Router 8.4.0을 사용했다. 초기 엔진 연결 실패 후 Docker Desktop을 시작하여 실행했다.

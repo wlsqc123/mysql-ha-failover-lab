@@ -25,6 +25,8 @@ def connect(admin=False, host=None, port=None):
         database='reward_lab',
         autocommit=False,
         connection_timeout=10,
+        # The C extension can leak native rollback exceptions during a disconnect.
+        use_pure=True,
     )
 
 
@@ -68,4 +70,7 @@ def grant_reward(request_id, account_id, amount):
             pass
         raise
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except mysql.connector.Error:
+            pass

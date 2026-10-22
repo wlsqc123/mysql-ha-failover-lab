@@ -22,7 +22,7 @@ if ($LASTEXITCODE -ne 0 -or @($networks.PSObject.Properties).Count -ne 1) { thro
 $network = @($networks.PSObject.Properties)[0].Name
 if (!$network) { throw 'DB network name could not be resolved' }
 $runId = 'partition-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '-' + [Guid]::NewGuid().ToString('N').Substring(0, 8)
-Compose run -d --name $runId workload python -m workload.runner --run-id $runId --requests 1600 --workers 4 --interval 0.05 --max-attempts 40 --retry-delay 0.5 | Out-Null
+Compose run -d --name $runId workload python -m workload.runner --run-id $runId --requests 1600 --workers 4 --interval 0.05 --retry-budget 60 --retry-delay 0.5 | Out-Null
 $directory = Join-Path $PWD "results/$runId"
 $deadline = [DateTime]::UtcNow.AddSeconds(60)
 do {
@@ -77,6 +77,9 @@ try {
     if ($running -ne 'false') { throw 'Workload deadline exceeded' }
     & docker logs $runId *> "$directory/workload.log"
     $workloadExit = & docker inspect --format '{{.State.ExitCode}}' $runId
+} catch {
+    Record @{event='experiment_error'; time_utc=[DateTime]::UtcNow.ToString('o'); error=$_.Exception.Message}
+    throw
 } finally {
     if ($disconnected) {
         & docker network connect --alias $target $network $container

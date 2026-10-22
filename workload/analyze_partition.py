@@ -46,12 +46,17 @@ def main(run_id):
     directory = Path('results') / run_id
     cluster = [json.loads(line) for line in (directory / 'cluster-events.jsonl').read_text(encoding='utf-8-sig').splitlines()]
     clients = [json.loads(line) for line in (directory / 'events.jsonl').read_text().splitlines()]
-    probe = json.loads((directory / 'isolated-probe.json').read_text())
+    probe_path = directory / 'isolated-probe.json'
+    probe = json.loads(probe_path.read_text()) if probe_path.exists() else {
+        'outcome': 'NOT_EXECUTED', 'timed_out': False,
+        'snapshot': {'offline_mode': None, 'read_only': None, 'super_read_only': None, 'members': []}}
     verification = json.loads((directory / 'verification.json').read_text())
-    with connect(admin=True) as conn:
-        with conn.cursor() as cursor:
-            cursor.execute('SELECT COUNT(*) FROM setup_checks WHERE check_id=%s', (probe['check_id'],))
-            probe_rows = cursor.fetchone()[0]
+    probe_rows = None
+    if probe_path.exists():
+        with connect(admin=True) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT COUNT(*) FROM setup_checks WHERE check_id=%s', (probe['check_id'],))
+                probe_rows = cursor.fetchone()[0]
     report = summarize(cluster, clients, probe, verification, probe_rows)
     (directory / 'partition-summary.json').write_text(json.dumps(report, indent=2) + '\n')
     with (directory / 'partition-summary.csv').open('w', newline='') as stream:

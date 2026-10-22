@@ -34,3 +34,7 @@ class PartitionSummaryTests(unittest.TestCase):
 
     def test_committed_probe_cannot_pass_as_blocked(self):
         self.assertFalse(summarize(self.cluster, self.clients, self.probe, self.verification, 1)['passed'])
+
+    def test_unexecuted_probe_is_not_success(self):
+        self.probe.update(outcome='NOT_EXECUTED', timed_out=False)
+        self.assertFalse(summarize(self.cluster, self.clients, self.probe, self.verification, None)['passed'])
