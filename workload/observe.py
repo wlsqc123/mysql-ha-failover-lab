@@ -15,7 +15,7 @@ def observe(host, reference=None):
                 cursor.execute('SELECT WAIT_FOR_EXECUTED_GTID_SET(%s, 10) AS wait_result', (gtid,))
                 if cursor.fetchone()['wait_result'] != 0:
                     raise RuntimeError('Reference GTID was not applied within 10 seconds')
-            cursor.execute('SELECT @@server_uuid AS server_uuid, @@read_only AS read_only, @@GLOBAL.gtid_executed AS gtid_executed')
+            cursor.execute('SELECT @@server_uuid AS server_uuid, @@read_only AS read_only, @@GLOBAL.super_read_only AS super_read_only, @@GLOBAL.offline_mode AS offline_mode, @@GLOBAL.group_replication_unreachable_majority_timeout AS unreachable_majority_timeout, @@GLOBAL.gtid_executed AS gtid_executed')
             result = cursor.fetchone()
             if reference:
                 cursor.execute('SELECT GTID_SUBSET(%s, @@GLOBAL.gtid_executed) AS applied', (gtid,))

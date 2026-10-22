@@ -16,7 +16,8 @@
 | Primary 장애 및 쓰기 재개 | 동적 대상 조회, SIGKILL, 관측 자동화 | 1회 통과, 앱 복구 관측 22.84초 |
 | 장애 노드 재가입 및 동기화 | 자동 복귀 관측과 노드별 데이터 검증 | 1회 통과: [상세](node-rejoin.md) |
 | Secondary 장애 및 복귀 | 동적 Secondary 조회, SIGKILL, 데이터·성능 관측 | 1회 통과, 1,600건, 오류·재시도 0회: [상세](secondary-failure.md) |
-| 네트워크 분할 / 결과 불명확 | 후속 Phase 3 | 미구현 |
+| 1 대 2 네트워크 분할 및 복구 | 실제 네트워크 단절·localhost COMMIT 검사 | 전체 FAIL: 재시도 한도 초과 1건, 정합성 PASS: [상세](network-partition.md) |
+| 전체 Quorum 상실 / COMMIT 응답 유실 실험 | 후속 Phase 3 | 미구현 |
 
 실행 환경: Windows Docker Desktop 4.25.0 / Linux x86_64 Engine 24.0.6 / Compose 2.23.0. Server, Shell, Router 8.4.0을 사용했다. 초기 엔진 연결 실패 후 Docker Desktop을 시작하여 실행했다.
 
