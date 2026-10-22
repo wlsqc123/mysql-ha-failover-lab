@@ -1,0 +1,76 @@
+name: mysql-ha-failover-lab
+
+x-db: &db
+  image: container-registry.oracle.com/mysql/community-server:8.4.0
+  restart: "no"
+  environment:
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Copy .env.example to .env first}
+    MYSQL_ROOT_HOST: "%"
+  networks: [lab]
+  healthcheck:
+    test: [CMD-SHELL, 'MYSQL_PWD="$${MYSQL_ROOT_PASSWORD}" mysql --protocol=tcp -h 127.0.0.1 -u root -Nse "SELECT 1"']
+    interval: 5s
+    timeout: 5s
+    retries: 60
+    start_period: 30s
+
+services:
+  workload:
+    profiles: [tools]
+    image: mysql-ha-lab-workload:local
+    build:
+      context: .
+      dockerfile: workload/Dockerfile
+    working_dir: /lab
+    command: [python, -m, unittest, discover, -s, tests, -p, test_rewards.py, -v]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+      LAB_APP_PASSWORD: ${LAB_APP_PASSWORD:?Set LAB_APP_PASSWORD}
+    volumes: [".:/lab:ro"]
+    networks: [lab]
+  mysql-1:
+    <<: *db
+    hostname: mysql-1
+    command: [mysqld, --server-id=1, --report-host=mysql-1, --gtid-mode=ON, --enforce-gtid-consistency=ON, --log-bin=binlog, --binlog-format=ROW, --log-replica-updates=ON]
+    ports: ["127.0.0.1:3307:3306"]
+    volumes: [mysql-1-data:/var/lib/mysql]
+  mysql-2:
+    <<: *db
+    hostname: mysql-2
+    command: [mysqld, --server-id=2, --report-host=mysql-2, --gtid-mode=ON, --enforce-gtid-consistency=ON, --log-bin=binlog, --binlog-format=ROW, --log-replica-updates=ON]
+    ports: ["127.0.0.1:3308:3306"]
+    volumes: [mysql-2-data:/var/lib/mysql]
+  mysql-3:
+    <<: *db
+    hostname: mysql-3
+    command: [mysqld, --server-id=3, --report-host=mysql-3, --gtid-mode=ON, --enforce-gtid-consistency=ON, --log-bin=binlog, --binlog-format=ROW, --log-replica-updates=ON]
+    ports: ["127.0.0.1:3309:3306"]
+    volumes: [mysql-3-data:/var/lib/mysql]
+  admin:
+    image: container-registry.oracle.com/mysql/community-server:8.4.0
+    profiles: [tools]
+    entrypoint: [mysqlsh, --js, --file]
+    command: [/scripts/bootstrap.js]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+      LAB_APP_PASSWORD: ${LAB_APP_PASSWORD:?Set LAB_APP_PASSWORD}
+    volumes: ["./scripts:/scripts:ro"]
+    networks: [lab]
+  router:
+    image: container-registry.oracle.com/mysql/community-router:8.4.0
+    restart: "no"
+    environment:
+      MYSQL_HOST: mysql-1
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+      MYSQL_INNODB_CLUSTER_MEMBERS: 3
+    ports: ["127.0.0.1:6446:6446"]
+    networks: [lab]
+
+networks:
+  lab:
+volumes:
+  mysql-1-data:
+  mysql-2-data:
+  mysql-3-data:
