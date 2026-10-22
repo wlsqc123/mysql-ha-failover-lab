@@ -2,7 +2,7 @@
 
 DBA 취업 포트폴리오용 MySQL 고가용성 및 장애 복구 검증 실습이다. Primary 장애 중 보상 지급을 지속하고, 승인 거래 보존과 중복 지급 여부를 검증하는 것을 목표로 한다.
 
-현재는 **Primary 장애 실험 1회와 종료 노드 복귀 검증 완료 단계**다. 지급 중 Primary 강제 종료, 자동 선출, 쓰기 재개, 승인 기록 보존과 종료 노드의 자동 재가입·동기화를 확인했다. 반복 실험과 Secondary 장애·네트워크 분할은 후속 단계다.
+현재는 **Primary·Secondary 장애 실험 각 1회와 노드 복귀 검증 완료 단계**다. 지급 중 자동 선출·쓰기 재개·승인 기록 보존, Secondary 장애 중 Primary 유지와 노드의 자동 재가입·동기화를 확인했다. 반복 실험과 네트워크 분할은 후속 단계다.
 
 ```text
 Workload Client → MySQL Router :6446 → InnoDB Cluster
@@ -62,6 +62,8 @@ docker compose stop
 
 ## 결과 및 다음 단계
 
+Secondary 강제 종료 실험도 1회 통과했다. mysql-3이 Primary를 유지했고 1,600건이 클라이언트 오류·재시도 없이 성공했다. 종료 노드를 복귀시킨 뒤 세 노드의 지급·잔액·기준 GTID 적용을 확인했다. [처리량·지연과 관측 한계](docs/secondary-failure.md)를 함께 기록했다.
+
 Primary 강제 종료 실험은 1회 통과했다. 1,600건 지급 중 연결 실패 80회가 발생했고 같은 요청 ID 재시도로 모두 최종 성공했다. 앱 복구 관측 시간은 22.84초이며 승인 거래 누락·중복 지급·잔액 불일치는 0건이었다. [실험 조건과 결과](docs/primary-failover.md)에 측정 한계와 원본 파일 위치를 기록했다.
 
 이후 mysql-1을 재시작해 약 24.01초 후 ONLINE Secondary로 자동 복귀한 것을 확인했다. mysql-3은 Primary를 유지했고, 3개 노드 각각에서 지급 1,600건과 잔액·기준 GTID 적용을 검증했다. [노드 복귀 결과](docs/node-rejoin.md)를 참고한다.
@@ -70,7 +72,7 @@ Primary 강제 종료 실험은 1회 통과했다. 1,600건 지급 중 연결 �
 
 보상 지급의 정상 동작과 중복 요청 검증도 구현했다. `.\scripts\lab.ps1 rewards`로 실행하며 신규 지급, 재요청, 입력 불일치, 동시 중복 요청, 원자적 롤백 등 7개 실제 DB 테스트를 통과했다. [보상 지급 설계와 결과](docs/reward-transactions.md)를 참고한다.
 
-2026-10-22 로컬 Docker에서 초기 구성부터 Primary 장애와 노드 복귀까지 진행했다. [진행 상태](docs/experiments.md)에 검증 범위를 구분했다. 다음 실험 후보는 Secondary 장애 중 쓰기 지속 여부 확인이다.
+2026-10-22 로컬 Docker에서 초기 구성부터 Primary·Secondary 장애와 노드 복귀까지 진행했다. [진행 상태](docs/experiments.md)에 검증 범위를 구분했다. 다음 실험 후보는 네트워크 분할과 과반수 유지·상실 시 동작 확인이다.
 
 단일 PC Docker 측정을 운영 SLA나 보장 가능한 RPO로 일반화하지 않는다. 자동 Failover는 백업을 대체하지 않는다. [설계와 한계](docs/architecture.md)를 참고한다.
 
