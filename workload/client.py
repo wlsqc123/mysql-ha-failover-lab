@@ -1,4 +1,4 @@
-"""One reward transaction per connection; automatic retries belong to a later step."""
+"""One reward transaction per connection; the runner owns retries and durable logs."""
 import os
 import re
 
@@ -16,10 +16,10 @@ class UnknownOutcome(RuntimeError):
     """COMMIT was attempted but its response was not confirmed."""
 
 
-def connect(admin=False):
+def connect(admin=False, host=None, port=None):
     return mysql.connector.connect(
-        host=os.getenv('LAB_DB_HOST', 'router'),
-        port=int(os.getenv('LAB_DB_PORT', '6446')),
+        host=host or os.getenv('LAB_DB_HOST', 'router'),
+        port=port or int(os.getenv('LAB_DB_PORT', '6446')),
         user='root' if admin else 'lab_app',
         password=os.environ['MYSQL_ROOT_PASSWORD' if admin else 'LAB_APP_PASSWORD'],
         database='reward_lab',

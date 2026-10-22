@@ -26,7 +26,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
       LAB_APP_PASSWORD: ${LAB_APP_PASSWORD:?Set LAB_APP_PASSWORD}
-    volumes: [".:/lab:ro"]
+    volumes: [".:/lab:ro", "./results:/lab/results"]
     networks: [lab]
   mysql-1:
     <<: *db

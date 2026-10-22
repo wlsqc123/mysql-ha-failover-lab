@@ -1,4 +1,4 @@
-param([ValidateSet('up','status','smoke','rewards','stop','logs')][string]$Action = 'status')
+param([ValidateSet('up','status','smoke','rewards','workload','stop','logs')][string]$Action = 'status')
 $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path $PSScriptRoot -Parent)
 function Compose {
@@ -14,6 +14,11 @@ switch ($Action) {
         Compose run --rm -e LAB_MODE=smoke admin
     }
     'status' { Compose run --rm -e LAB_MODE=status admin }
+    'workload' {
+        Compose build workload
+        Compose run --rm workload python -m workload.setup
+        Compose run --rm workload python -m workload.runner
+    }
     'rewards' {
         Compose build workload
         Compose run --rm workload python -m workload.setup
