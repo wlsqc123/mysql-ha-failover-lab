@@ -12,7 +12,7 @@
 - 자동 재시작 비활성화, 강제 Quorum 복구 및 수동 Primary 지정 없음
 - 워밍업을 분리한 성능 실험이 아닌 장애 실험 절차 검증
 
-PowerShell에서 실행한다. 현재는 이전 실험으로 mysql-1이 중단돼 있으므로 3노드 복귀를 별도 검증한 뒤에만 재실행할 수 있다.
+PowerShell에서 실행한다. 재실행 전에는 세 노드의 ONLINE 상태와 이전 장애의 복귀·동기화 완료를 확인해야 한다. 이 실험 후의 노드 복귀는 별도 단계에서 검증했다.
 
 ```powershell
 .\scripts\primary_failover.ps1
@@ -70,4 +70,4 @@ PowerShell에서 실행한다. 현재는 이전 실험으로 mysql-1이 중단�
 
 사전 회귀 테스트 18개와 시간 집계 단위 테스트를 통과했다. results 원본 파일은 로컬에 보존하며 기본 Git 제외 대상이다. 이 문서의 수치는 실제 단일 실행 결과다. 5회 반복 통계, 부하 대비 성능, 운영 SLA, 보장 가능한 RPO로 일반화하지 않는다.
 
-현재 mysql-1은 중단 상태로 보존했고 mysql-3 PRIMARY, mysql-2 SECONDARY가 ONLINE이다. 다음 단계는 종료 노드를 복귀시켜 역할과 동기화를 검증하는 것이다.
+이 실험 종료 시점에는 mysql-1을 중단 상태로 보존했고 mysql-3 PRIMARY, mysql-2 SECONDARY가 ONLINE이었다. 이후 별도 단계에서 [종료 노드 복귀와 동기화](node-rejoin.md)를 검증했다.

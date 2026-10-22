@@ -24,13 +24,35 @@ def observe(host, reference=None):
             result['members'] = cursor.fetchall()
             cursor.execute('SELECT CHANNEL_NAME, LAST_ERROR_NUMBER, LAST_ERROR_MESSAGE FROM performance_schema.replication_applier_status_by_worker WHERE LAST_ERROR_NUMBER <> 0')
             result['applier_errors'] = cursor.fetchall()
+            cursor.execute('SELECT CHANNEL_NAME, SERVICE_STATE, RECEIVED_TRANSACTION_SET, LAST_ERROR_NUMBER, LAST_ERROR_MESSAGE FROM performance_schema.replication_connection_status')
+            result['replication_connections'] = cursor.fetchall()
         result.update(observer=host, time_utc=datetime.now(timezone.utc).isoformat())
         return result
+
+
+def assert_restored(snapshot, expected_primary):
+    members = snapshot['members']
+    if {m['MEMBER_HOST'] for m in members} != {'mysql-1', 'mysql-2', 'mysql-3'} or len(members) != 3:
+        raise RuntimeError('Expected all three cluster members')
+    if any(m['MEMBER_STATE'] != 'ONLINE' for m in members):
+        raise RuntimeError('Not all members are ONLINE')
+    primaries = [m['MEMBER_HOST'] for m in members if m['MEMBER_ROLE'] == 'PRIMARY']
+    if primaries != [expected_primary]:
+        raise RuntimeError('Primary changed or multiple primaries observed')
+    local = next(m for m in members if m['MEMBER_HOST'] == snapshot['observer'])
+    if bool(snapshot['read_only']) != (local['MEMBER_ROLE'] != 'PRIMARY'):
+        raise RuntimeError('Local write protection does not match member role')
+    if snapshot['applier_errors']:
+        raise RuntimeError('Replication applier errors found')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('host')
     parser.add_argument('--reference')
+    parser.add_argument('--require-primary')
     args = parser.parse_args()
-    print(json.dumps(observe(args.host, args.reference)))
+    result = observe(args.host, args.reference)
+    if args.require_primary:
+        assert_restored(result, args.require_primary)
+    print(json.dumps(result))

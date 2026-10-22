@@ -14,7 +14,8 @@
 | 장애 중 승인 거래 보존 및 지급·잔액 검증 | 요청 로그와 DB 대조 | Primary 장애 1회 통과, 1,600건: [상세](primary-failover.md) |
 | 지속 요청 및 로그·DB 대조 | 재시도 클라이언트와 독립 검증 | 정상 상태 200건 통과: [상세](continuous-workload.md) |
 | Primary 장애 및 쓰기 재개 | 동적 대상 조회, SIGKILL, 관측 자동화 | 1회 통과, 앱 복구 관측 22.84초 |
-| Secondary / 분할 / 재가입 / 결과 불명확 | 후속 Phase 3 | 미구현 |
+| 장애 노드 재가입 및 동기화 | 자동 복귀 관측과 노드별 데이터 검증 | 1회 통과: [상세](node-rejoin.md) |
+| Secondary / 분할 / 결과 불명확 | 후속 Phase 3 | 미구현 |
 
 실행 환경: Windows Docker Desktop 4.25.0 / Linux x86_64 Engine 24.0.6 / Compose 2.23.0. Server, Shell, Router 8.4.0을 사용했다. 초기 엔진 연결 실패 후 Docker Desktop을 시작하여 실행했다.
 
